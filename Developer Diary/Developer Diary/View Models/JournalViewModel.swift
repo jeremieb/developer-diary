@@ -17,12 +17,11 @@ final class JournalViewModel {
     var entries: [JournalEntry] = []
     private var previewImageCache: [UUID: UIImage] = [:]
     private var generatingPreviews: Set<UUID> = []
-    private var sharedEngine: Engine?
-    private var isInitializingEngine = false
     
     init(context: ModelContext) {
         self.context = context
         fetchEntries()
+        cleanupOrphanedPreviewImages()
     }
     
     func fetchEntries() {
@@ -92,6 +91,8 @@ final class JournalViewModel {
         } catch {
             print("Error deleting entry: \(error.localizedDescription)")
         }
+        
+        cleanupOrphanedPreviewImages()
     }
     
     // MARK: - Preview Image Generation
@@ -104,40 +105,6 @@ final class JournalViewModel {
         return generatingPreviews.contains(entry.id)
     }
     
-    private func getOrCreateEngine() async throws -> Engine {
-        if let sharedEngine = sharedEngine {
-            return sharedEngine
-        }
-        
-        // Prevent multiple engine creation attempts
-        if isInitializingEngine {
-            // Wait for existing initialization
-            while isInitializingEngine {
-                try await Task.sleep(nanoseconds: 100_000_000) // 100ms
-            }
-            if let sharedEngine = sharedEngine {
-                return sharedEngine
-            }
-        }
-        
-        isInitializingEngine = true
-        
-        do {
-            let engine = try await Engine(
-                license: "w4PVeqZdxtlB4FicODTgcf-keMYt-U6Vr6qhqIdBtPdlRhvxb6j1OvWUuTFhI8rw",
-                userID: "myUniqueUserID01"
-            )
-            
-            sharedEngine = engine
-            isInitializingEngine = false
-            
-            return engine
-        } catch {
-            isInitializingEngine = false
-            throw error
-        }
-    }
-    
     @MainActor
     func generatePreviewImage(for entry: JournalEntry) {
         // Don't generate if already generating or if no scene
@@ -146,7 +113,7 @@ final class JournalViewModel {
         // Check if we already have a cached image
         if previewImageCache[entry.id] != nil { return }
         
-        // First try to load from stored URL
+        // Try to load from stored URL, but don't fail if file doesn't exist
         if let previewImageURL = entry.previewImageURL {
             do {
                 let data = try Data(contentsOf: previewImageURL)
@@ -155,23 +122,32 @@ final class JournalViewModel {
                     return
                 }
             } catch {
-                print("Error loading stored preview image: \(error.localizedDescription)")
+                // File doesn't exist or can't be loaded, we'll regenerate it
+                print("Will regenerate preview for entry: \(entry.title)")
             }
         }
         
-        // Generate from scene string
-        generatingPreviews.insert(entry.id)
+        // Extract values we need for the async task
+        let entryID = entry.id
+        let sceneString = entry.sceneString
+        
+        // Generate from scene string - each entry gets its own engine to avoid conflicts
+        generatingPreviews.insert(entryID)
         
         Task {
             do {
-                let engine = try await getOrCreateEngine()
+                // Create a separate engine instance for each preview generation
+                let engine = try await Engine(
+                    license: "w4PVeqZdxtlB4FicODTgcf-keMYt-U6Vr6qhqIdBtPdlRhvxb6j1OvWUuTFhI8rw",
+                    userID: "myUniqueUserID01"
+                )
                 
                 // Load scene from string
-                try await engine.scene.load(from: entry.sceneString)
+                try await engine.scene.load(from: sceneString)
                 
                 // Get the scene
                 guard let scene = try engine.scene.get() else {
-                    generatingPreviews.remove(entry.id)
+                    generatingPreviews.remove(entryID)
                     return
                 }
                 
@@ -188,18 +164,77 @@ final class JournalViewModel {
                     options: exportOptions
                 )
                 
-                // Convert to UIImage
-                let image = UIImage(data: imageData)
-                
-                if let image = image {
-                    previewImageCache[entry.id] = image
+                // Convert to UIImage and cache it
+                if let image = UIImage(data: imageData) {
+                    previewImageCache[entryID] = image
+                    
+                    // Save the image to current app container
+                    await savePreviewImage(imageData, for: entryID)
                 }
-                generatingPreviews.remove(entry.id)
+                
+                generatingPreviews.remove(entryID)
                 
             } catch {
                 print("Error generating preview image: \(error.localizedDescription)")
-                generatingPreviews.remove(entry.id)
+                generatingPreviews.remove(entryID)
             }
+        }
+    }
+    
+    private func savePreviewImage(_ imageData: Data, for entryID: UUID) async {
+        do {
+            // Always use the current app container's documents directory
+            let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            let previewsDirectory = documentsPath.appendingPathComponent("previews")
+            
+            // Create the directory if it doesn't exist
+            try FileManager.default.createDirectory(at: previewsDirectory, withIntermediateDirectories: true)
+            
+            // Create a consistent filename based on entry ID
+            let imageURL = previewsDirectory.appendingPathComponent("preview_\(entryID.uuidString).png")
+            
+            // Save the image
+            try imageData.write(to: imageURL)
+            
+            // Update the entry with the new URL
+            await MainActor.run {
+                // Find the entry by ID and update it
+                if let entry = entries.first(where: { $0.id == entryID }) {
+                    entry.previewImageURL = imageURL
+                    try? context.save()
+                }
+            }
+        } catch {
+            print("Error saving preview image: \(error)")
+        }
+    }
+    
+    private func getCurrentPreviewDirectory() -> URL {
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        return documentsPath.appendingPathComponent("previews")
+    }
+    
+    func cleanupOrphanedPreviewImages() {
+        let previewsDirectory = getCurrentPreviewDirectory()
+        
+        guard FileManager.default.fileExists(atPath: previewsDirectory.path) else { return }
+        
+        do {
+            let files = try FileManager.default.contentsOfDirectory(at: previewsDirectory, includingPropertiesForKeys: nil)
+            let entryIDs = Set(entries.map { $0.id.uuidString })
+            
+            for file in files {
+                let filename = file.deletingPathExtension().lastPathComponent
+                if filename.hasPrefix("preview_") {
+                    let entryID = String(filename.dropFirst(8)) // Remove "preview_" prefix
+                    if !entryIDs.contains(entryID) {
+                        try FileManager.default.removeItem(at: file)
+                        print("Cleaned up orphaned preview: \(filename)")
+                    }
+                }
+            }
+        } catch {
+            print("Error cleaning up orphaned previews: \(error)")
         }
     }
     
@@ -223,6 +258,5 @@ final class JournalViewModel {
     }
     
     deinit {
-        sharedEngine = nil
     }
 }
