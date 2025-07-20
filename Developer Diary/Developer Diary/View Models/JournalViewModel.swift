@@ -107,70 +107,35 @@ final class JournalViewModel {
         // Check if we already have a cached image
         if previewImageCache[entry.id] != nil { return }
         
-        // Try to load from stored URL, but don't fail if file doesn't exist
-        if let previewImageURL = entry.previewImageURL {
-            do {
-                let data = try Data(contentsOf: previewImageURL)
-                if let image = UIImage(data: data) {
-                    previewImageCache[entry.id] = image
-                    return
-                }
-            } catch {
-                // File doesn't exist or can't be loaded, we'll regenerate it
-                print("Will regenerate preview for entry: \(entry.title)")
-            }
-        }
-        
-        // Extract values we need for the async task
-        let entryID = entry.id
-        let sceneString = entry.sceneString
-        
-        // Generate from scene string - each entry gets its own engine to avoid conflicts
-        generatingPreviews.insert(entryID)
+        generatingPreviews.insert(entry.id)
         
         Task {
+            defer { generatingPreviews.remove(entry.id) }
+            
             do {
-                // Create a separate engine instance for each preview generation
                 let engine = try await Engine(
                     license: "w4PVeqZdxtlB4FicODTgcf-keMYt-U6Vr6qhqIdBtPdlRhvxb6j1OvWUuTFhI8rw",
                     userID: "myUniqueUserID01"
                 )
                 
-                // Load scene from string
-                try await engine.scene.load(from: sceneString)
+                try await engine.scene.load(from: entry.sceneString)
+                guard let scene = try engine.scene.get() else { return }
                 
-                // Get the scene
-                guard let scene = try engine.scene.get() else {
-                    generatingPreviews.remove(entryID)
-                    return
-                }
-                
-                // Export as PNG
                 let exportOptions = ExportOptions(
-                    pngCompressionLevel: 5,
-                    targetWidth: 300,
-                    targetHeight: 300
+                    jpegQuality: 3,
+                    targetWidth: 1024,
+                    targetHeight: 1920
                 )
                 
-                let imageData = try await engine.block.export(
-                    scene,
-                    mimeType: .png,
-                    options: exportOptions
-                )
+                let imageData = try await engine.block.export(scene, mimeType: .jpeg, options: exportOptions)
                 
-                // Convert to UIImage and cache it
                 if let image = UIImage(data: imageData) {
-                    previewImageCache[entryID] = image
-                    
-                    // Save the image to current app container
-                    await savePreviewImage(imageData, for: entryID)
+                    previewImageCache[entry.id] = image
+                    await savePreviewImage(imageData, for: entry.id)
                 }
-                
-                generatingPreviews.remove(entryID)
                 
             } catch {
                 print("Error generating preview image: \(error.localizedDescription)")
-                generatingPreviews.remove(entryID)
             }
         }
     }
@@ -185,7 +150,7 @@ final class JournalViewModel {
             try FileManager.default.createDirectory(at: previewsDirectory, withIntermediateDirectories: true)
             
             // Create a consistent filename based on entry ID
-            let imageURL = previewsDirectory.appendingPathComponent("preview_\(entryID.uuidString).png")
+            let imageURL = previewsDirectory.appendingPathComponent("preview_\(entryID.uuidString).jpeg")
             
             // Save the image
             try imageData.write(to: imageURL)
