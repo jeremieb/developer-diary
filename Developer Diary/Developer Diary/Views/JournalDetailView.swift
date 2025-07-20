@@ -20,22 +20,11 @@ struct JournalDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 if entry.hasSceneFile {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Image")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                        
-                        PreviewImageView(
-                            entry: entry,
-                            viewModel: viewModel,
-                            height: 200,
-                            showEditButton: true
-                        ) {
-                            showImageEditor = true
-                        }
-                    }
-                    
-                    Divider()
+                    PreviewImageView(
+                        entry: entry,
+                        viewModel: viewModel,
+                        showEditButton: false
+                    )
                 }
 
                 // Title section

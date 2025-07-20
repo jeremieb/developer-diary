@@ -21,7 +21,6 @@ final class JournalViewModel {
     init(context: ModelContext) {
         self.context = context
         fetchEntries()
-        cleanupOrphanedPreviewImages()
     }
     
     func fetchEntries() {
@@ -91,8 +90,6 @@ final class JournalViewModel {
         } catch {
             print("Error deleting entry: \(error.localizedDescription)")
         }
-        
-        cleanupOrphanedPreviewImages()
     }
     
     // MARK: - Preview Image Generation
@@ -208,36 +205,7 @@ final class JournalViewModel {
             print("Error saving preview image: \(error)")
         }
     }
-    
-    private func getCurrentPreviewDirectory() -> URL {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        return documentsPath.appendingPathComponent("previews")
-    }
-    
-    func cleanupOrphanedPreviewImages() {
-        let previewsDirectory = getCurrentPreviewDirectory()
-        
-        guard FileManager.default.fileExists(atPath: previewsDirectory.path) else { return }
-        
-        do {
-            let files = try FileManager.default.contentsOfDirectory(at: previewsDirectory, includingPropertiesForKeys: nil)
-            let entryIDs = Set(entries.map { $0.id.uuidString })
-            
-            for file in files {
-                let filename = file.deletingPathExtension().lastPathComponent
-                if filename.hasPrefix("preview_") {
-                    let entryID = String(filename.dropFirst(8)) // Remove "preview_" prefix
-                    if !entryIDs.contains(entryID) {
-                        try FileManager.default.removeItem(at: file)
-                        print("Cleaned up orphaned preview: \(filename)")
-                    }
-                }
-            }
-        } catch {
-            print("Error cleaning up orphaned previews: \(error)")
-        }
-    }
-    
+
     @MainActor
     func refreshPreviewImage(for entry: JournalEntry) {
         // Clear cache and force regeneration
