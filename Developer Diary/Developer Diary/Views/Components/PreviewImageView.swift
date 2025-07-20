@@ -55,11 +55,6 @@ struct PreviewImageView: View {
                         }
                     }
                 }
-                .onTapGesture {
-                    if showEditButton {
-                        onEditTap?()
-                    }
-                }
                 if showEditButton && viewModel.previewImage(for: entry) != nil {
                     Button("Edit Image") {
                         onEditTap?()

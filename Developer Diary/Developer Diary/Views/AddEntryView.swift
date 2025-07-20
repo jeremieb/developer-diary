@@ -37,7 +37,6 @@ struct AddEntryView: View {
         }
     }
 
-    
     var body: some View {
         NavigationView {
             Form {
