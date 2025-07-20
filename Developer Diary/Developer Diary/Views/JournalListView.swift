@@ -45,8 +45,7 @@ struct JournalListView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 16) // Native 16pt margins
-                    .padding(.top, 16)
+                    .padding(.horizontal).padding(.top)
                     .navigationDestination(item: $selectedJournalEntry) { entry in
                         JournalDetailView(entry: entry, viewModel: viewModel)
                             .navigationTransition(.zoom(sourceID: entry.id, in: namespace))
