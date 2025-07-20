@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct AddEntryView: View {
+    
     @Environment(\.dismiss) private var dismiss
+    
     @State private var title = ""
     @State private var description = ""
     @State private var showEditor = false
@@ -17,11 +19,7 @@ struct AddEntryView: View {
     
     let viewModel: JournalViewModel
     let entryToEdit: JournalEntry?
-    
-    private var isEditing: Bool {
-        entryToEdit != nil
-    }
-    
+
     init(viewModel: JournalViewModel, entryToEdit: JournalEntry? = nil) {
         self.viewModel = viewModel
         self.entryToEdit = entryToEdit
@@ -67,7 +65,7 @@ struct AddEntryView: View {
                     }
                 }.listRowInsets(.init())
             }
-            .navigationTitle(isEditing ? "Edit Entry" : "New Entry")
+            .navigationTitle(entryToEdit != nil ? "Edit Entry" : "New Entry")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -76,11 +74,11 @@ struct AddEntryView: View {
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(isEditing ? "Update" : "Save") {
-                        if isEditing, let entry = entryToEdit {
-                            viewModel.updateEntry(entry, title: title, note: description, sceneString: sceneString, previewImageURL: previewImageURL)
+                    Button(entryToEdit != nil ? "Update" : "Save") {
+                        if let entry = entryToEdit {
+                            viewModel.saveEntry(entry, title: title, note: description, sceneString: sceneString, previewImageURL: previewImageURL)
                         } else {
-                            viewModel.addEntry(title: title, note: description, sceneString: sceneString, previewImageURL: previewImageURL)
+                            viewModel.saveEntry(title: title, note: description, sceneString: sceneString, previewImageURL: previewImageURL)
                         }
                         dismiss()
                     }

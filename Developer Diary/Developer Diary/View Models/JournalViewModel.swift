@@ -32,31 +32,26 @@ final class JournalViewModel {
         }
     }
     
-    func addEntry(title: String, note: String, sceneString: String?, previewImageURL: URL? = nil) {
-        let scene = sceneString ?? "/dev/null"
-        let entry = JournalEntry(title: title, note: note, sceneString: scene, previewImageURL: previewImageURL)
-        context.insert(entry)
-        
-        do {
-            try context.save()
-            fetchEntries()
-        } catch {
-            print("Error saving entry: \(error.localizedDescription)")
-        }
-    }
-    
-    @MainActor func updateEntry(_ entry: JournalEntry, title: String, note: String, sceneString: String?, previewImageURL: URL? = nil) {
-        entry.title = title
-        entry.note = note
-        if let sceneString {
-            entry.sceneString = sceneString
-            // Clear cached preview when scene changes
-            previewImageCache.removeValue(forKey: entry.id)
-            // Also remove from generating set to allow regeneration
-            generatingPreviews.remove(entry.id)
-        }
-        if let previewImageURL {
-            entry.previewImageURL = previewImageURL
+    func saveEntry(_ entry: JournalEntry? = nil, title: String, note: String, sceneString: String?, previewImageURL: URL? = nil) {
+        if let entry = entry {
+            // Update existing entry
+            entry.title = title
+            entry.note = note
+            if let sceneString {
+                entry.sceneString = sceneString
+                // Clear cached preview when scene changes
+                previewImageCache.removeValue(forKey: entry.id)
+                // Also remove from generating set to allow regeneration
+                generatingPreviews.remove(entry.id)
+            }
+            if let previewImageURL {
+                entry.previewImageURL = previewImageURL
+            }
+        } else {
+            // Create new entry
+            let scene = sceneString ?? "/dev/null"
+            let newEntry = JournalEntry(title: title, note: note, sceneString: scene, previewImageURL: previewImageURL)
+            context.insert(newEntry)
         }
         
         do {
@@ -64,11 +59,13 @@ final class JournalViewModel {
             fetchEntries()
             
             // Force regenerate preview if scene was updated
-            if sceneString != nil {
-                generatePreviewImage(for: entry)
+            if let entry = entry, sceneString != nil {
+                Task { @MainActor in
+                    generatePreviewImage(for: entry)
+                }
             }
         } catch {
-            print("Error updating entry: \(error.localizedDescription)")
+            print("Error saving entry: \(error.localizedDescription)")
         }
     }
     
