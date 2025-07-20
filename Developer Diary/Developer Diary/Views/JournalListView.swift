@@ -71,6 +71,15 @@ struct JournalListView: View {
                 }) {
                     AddEntryView(viewModel: viewModel, entryToEdit: editEntry)
                 }
+                .overlay {
+                    if viewModel.entries.count == 0 {
+                        ContentUnavailableView {
+                            Label("Your Journal is empty", systemImage: "append.page.fill")
+                        } description: {
+                            Text("Use the add button on the top of the screen to add your first entry.")
+                        }
+                    }
+                }
             }
         }
         .onAppear {

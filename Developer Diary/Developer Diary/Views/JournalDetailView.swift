@@ -24,7 +24,7 @@ struct JournalDetailView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(entry.title)
                             .font(.title2)
-                            .fontWeight(.semibold)
+                            .fontWeight(.semibold).fontWidth(.expanded)
                     }
                 }
                 

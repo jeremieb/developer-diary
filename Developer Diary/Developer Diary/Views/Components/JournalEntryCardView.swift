@@ -49,13 +49,13 @@ struct JournalEntryCardView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(entry.title)
                         .font(.headline)
-                        .fontWeight(.medium)
+                        .fontWeight(.medium).fontWidth(.expanded)
                         .lineLimit(1)
                     
                     Text(entry.note)
                         .font(.caption)
                         .foregroundColor(.secondary)
-                        .lineLimit(2)
+                        .lineLimit(2).multilineTextAlignment(.leading)
                     
                     Text(entry.date.formatted(date: .abbreviated, time: .shortened))
                         .font(.caption2)
