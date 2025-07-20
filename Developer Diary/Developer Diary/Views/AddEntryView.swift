@@ -50,53 +50,22 @@ struct AddEntryView: View {
                 }
                 
                 Section(header: Text("Image")) {
-                    VStack(spacing: 12) {
+                    ZStack(alignment: .topTrailing) {
                         if let sceneString, !sceneString.isEmpty && sceneString != "/dev/null" {
-                            if isEditing, let entry = entryToEdit {
+                            if let entry = entryToEdit {
                                 // For editing, use the actual entry to maintain cache
                                 PreviewImageView(
                                     entry: entry,
                                     viewModel: viewModel,
-                                    height: 150,
                                     showEditButton: false
                                 )
-                            } else {
-                                // For new entries, show a simple preview or placeholder
-                                if let previewImageURL, let previewImage = loadPreviewImage(from: previewImageURL) {
-                                    Image(uiImage: previewImage)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(maxHeight: 150)
-                                        .cornerRadius(8)
-                                } else {
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color.gray.opacity(0.1))
-                                        .frame(height: 150)
-                                        .overlay(
-                                            VStack(spacing: 8) {
-                                                Image(systemName: "photo.on.rectangle")
-                                                    .font(.system(size: 40))
-                                                    .foregroundColor(.blue)
-                                                Text("Scene created")
-                                                    .font(.caption)
-                                                    .foregroundColor(.secondary)
-                                            }
-                                        )
-                                }
                             }
-                            
-                            Button("Edit Image") {
-                                showEditor = true
-                            }
-                            .foregroundColor(.blue)
-                        } else {
-                            Button("Add Image") {
-                                showEditor = true
-                            }
-                            .foregroundColor(.blue)
                         }
+                        Button(entryToEdit != nil ? "Edit Image" : "Add Image") {
+                            showEditor = true
+                        }.buttonStyle(.borderedProminent).padding()
                     }
-                }
+                }.listRowInsets(.init())
             }
             .navigationTitle(isEditing ? "Edit Entry" : "New Entry")
             .toolbar {
@@ -136,8 +105,13 @@ struct AddEntryView: View {
                     sceneString = savedSceneString
                     self.previewImageURL = previewImageURL
                     
-                    // If we're editing an existing entry, refresh its preview
+                    // If we're editing an existing entry, update the actual entry's scene string immediately
                     if let entry = entryToEdit {
+                        entry.sceneString = savedSceneString
+                        if let previewImageURL {
+                            entry.previewImageURL = previewImageURL
+                        }
+                        // Now refresh the preview with the updated scene string
                         viewModel.refreshPreviewImage(for: entry)
                     }
                 },

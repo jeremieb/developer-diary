@@ -16,6 +16,7 @@ struct JournalListView: View {
     @State private var showAddView = false
     @State private var viewModel: JournalViewModel?
     @State private var selectedJournalEntry: JournalEntry?
+    @State private var editEntry: JournalEntry?
     
     var body: some View {
         NavigationStack {
@@ -29,6 +30,19 @@ struct JournalListView: View {
                                 JournalEntryCardView(entry: entry, viewModel: viewModel)
                                     .matchedTransitionSource(id: entry.id, in: namespace)
                             }
+                            .contextMenu {
+                                Button(action: {
+                                    editEntry = entry
+                                }){
+                                    Label("Edit", systemImage: "square.and.pencil")
+                                }
+                                Divider()
+                                Button(role: .destructive, action: {
+                                    viewModel.deleteEntry(entry)
+                                }){
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                         }
                     }
                     .padding(.horizontal, 16) // Native 16pt margins
@@ -37,17 +51,25 @@ struct JournalListView: View {
                         JournalDetailView(entry: entry, viewModel: viewModel)
                             .navigationTransition(.zoom(sourceID: entry.id, in: namespace))
                     }
+                    .animation(.easeInOut, value: viewModel.entries)
                 }
-                .navigationTitle("Diary of a Dev")
+                .navigationTitle("My Journal")
                 .toolbar {
                     Button {
-                        showAddView = true
+                        showAddView.toggle()
                     } label: {
                         Label("Add Entry", systemImage: "plus")
                     }
                 }
-                .fullScreenCover(isPresented: $showAddView) {
-                    AddEntryView(viewModel: viewModel)
+                .onChange(of: editEntry) { _, newState in
+                    if newState != nil {
+                        showAddView.toggle()
+                    }
+                }
+                .fullScreenCover(isPresented: $showAddView, onDismiss: {
+                    editEntry = nil
+                }) {
+                    AddEntryView(viewModel: viewModel, entryToEdit: editEntry)
                 }
             }
         }

@@ -24,45 +24,42 @@ struct PreviewImageView: View {
     }
     
     var body: some View {
-        ZStack {
-            VStack {
-                Group {
-                    if viewModel.isGeneratingPreview(for: entry) {
-                        VStack(spacing: 12) {
-                            ProgressView()
-                        }
-                        .frame(maxHeight: .infinity)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .background(Color.secondary.opacity(0.1))
-                    } else if let previewImage = viewModel.previewImage(for: entry) {
-                        previewImage
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .cornerRadius(8)
-                    } else {
-                        VStack(spacing: 8) {
-                            Image(systemName: "photo.on.rectangle")
-                                .font(.system(size: 40))
+        VStack {
+            Group {
+                if viewModel.isGeneratingPreview(for: entry) {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                    }
+                } else if let previewImage = viewModel.previewImage(for: entry) {
+                    previewImage
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .cornerRadius(8)
+                } else {
+                    VStack(spacing: 8) {
+                        Image(systemName: "photo.on.rectangle")
+                            .font(.system(size: 40))
+                            .foregroundColor(.blue)
+                        if showEditButton {
+                            Text("Tap to Edit Image")
+                                .font(.caption)
                                 .foregroundColor(.blue)
-                            if showEditButton {
-                                Text("Tap to Edit Image")
-                                    .font(.caption)
-                                    .foregroundColor(.blue)
-                            }
-                            Text("Scene length: \(entry.sceneString.count)")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
                         }
+                        Text("Scene length: \(entry.sceneString.count)")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
                     }
                 }
-                if showEditButton && viewModel.previewImage(for: entry) != nil {
-                    Button("Edit Image") {
-                        onEditTap?()
-                    }
-                    .foregroundColor(.blue)
-                    .font(.caption)
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
+            if showEditButton && viewModel.previewImage(for: entry) != nil {
+                Button("Edit Image") {
+                    onEditTap?()
                 }
-            }.animation(.easeInOut, value: viewModel.isGeneratingPreview(for: entry))
-        }.frame(maxHeight: .infinity).frame(height: height)
+                .foregroundColor(.blue)
+                .font(.caption)
+            }
+        }
+        .animation(.easeInOut, value: viewModel.isGeneratingPreview(for: entry))
     }
 }

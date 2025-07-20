@@ -14,76 +14,61 @@ struct JournalDetailView: View {
     let viewModel: JournalViewModel
     
     @State private var showEditView = false
-    @State private var showImageEditor = false
     
     var body: some View {
-        ScrollView {
+        VStack {
+            Spacer()
             VStack(alignment: .leading, spacing: 16) {
-                if entry.hasSceneFile {
-                    PreviewImageView(
-                        entry: entry,
-                        viewModel: viewModel,
-                        showEditButton: false
-                    )
+                if entry.title != "" {
+                    // Title section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(entry.title)
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                    }
                 }
-
-                // Title section
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Title")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    Text(entry.title)
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                }
-                
-                Divider()
-                
-                // Date section
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Date")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    Text(entry.date.formatted(date: .complete, time: .shortened))
-                        .font(.body)
-                }
-                
-                Divider()
                 
                 // Note section
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Notes")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    Text(entry.note)
-                        .font(.body)
-                        .lineLimit(nil)
+                if entry.note != "" {
+                    Divider()
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(entry.note)
+                            .font(.body)
+                            .lineLimit(nil)
+                    }
                 }
-                
-                Spacer()
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
+            .background(.ultraThinMaterial)
+            .cornerRadius(20)
+            .padding()
+            .foregroundStyle(Color.primary)
         }
-        .navigationTitle("Entry Details")
+        .background {
+            if entry.hasSceneFile {
+                PreviewImageView(
+                    entry: entry,
+                    viewModel: viewModel,
+                    height: UIScreen.main.bounds.height,
+                    showEditButton: false
+                )
+                .frame(maxHeight: .infinity)
+                .ignoresSafeArea()
+            }
+        }
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Edit") {
-                    showEditView = true
+                    showEditView.toggle()
                 }
+                .buttonStyle(.borderedProminent)
             }
         }
         .fullScreenCover(isPresented: $showEditView) {
             AddEntryView(viewModel: viewModel, entryToEdit: entry)
-        }
-        .fullScreenCover(isPresented: $showImageEditor) {
-            EditorView(
-                onSave: { savedSceneString, previewImageURL in
-                    viewModel.updateEntry(entry, title: entry.title, note: entry.note, sceneString: savedSceneString, previewImageURL: previewImageURL)
-                    viewModel.refreshPreviewImage(for: entry)
-                },
-                existingSceneString: entry.sceneString != "/dev/null" ? entry.sceneString : nil
-            )
         }
     }
 }
