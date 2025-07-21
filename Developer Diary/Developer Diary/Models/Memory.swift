@@ -1,5 +1,5 @@
 //
-//  JournalEntry.swift
+//  Memory.swift
 //  Developer Diary
 //
 //  Created by Jeremie Berduck on 18/07/2025.
@@ -9,7 +9,7 @@ import Foundation
 import SwiftData
 
 @Model
-final class JournalEntry {
+final class Memory {
     @Attribute(.unique) var id: UUID
     var title: String
     var note: String

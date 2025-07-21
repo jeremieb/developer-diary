@@ -8,20 +8,18 @@
 import SwiftUI
 
 struct JournalEntryCardView: View {
-    let entry: JournalEntry
+    let memory: Memory
     let viewModel: JournalViewModel
     
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
-                // Image used as card background
                 RoundedRectangle(cornerRadius: 20)
                     .fill(Color.secondary.opacity(1))
                     .overlay {
-                        // Preview image section - takes up about 70% of the card
-                        if entry.hasSceneFile {
+                        if memory.hasSceneFile {
                             PreviewImageView(
-                                entry: entry,
+                                entry: memory,
                                 viewModel: viewModel,
                                 height: geometry.size.height,
                                 showEditButton: false
@@ -44,20 +42,18 @@ struct JournalEntryCardView: View {
                         }
                     }
                 
-                // Journal entry
-                // Content section - takes up remaining 30%
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(entry.title)
+                    Text(memory.title)
                         .font(.headline)
                         .fontWeight(.medium).fontWidth(.expanded)
                         .lineLimit(1)
                     
-                    Text(entry.note)
+                    Text(memory.note)
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .lineLimit(2).multilineTextAlignment(.leading)
                     
-                    Text(entry.date.formatted(date: .abbreviated, time: .shortened))
+                    Text(memory.date.formatted(date: .abbreviated, time: .shortened))
                         .font(.caption2)
                         .foregroundColor(Color.secondary)
                 }

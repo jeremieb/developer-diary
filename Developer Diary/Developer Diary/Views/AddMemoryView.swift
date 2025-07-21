@@ -1,5 +1,5 @@
 //
-//  AddEntryView.swift
+//  AddMemoryView.swift
 //  Developer Diary
 //
 //  Created by Jeremie Berduck on 18/07/2025.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct AddEntryView: View {
+struct AddMemoryView: View {
     
     @Environment(\.dismiss) private var dismiss
     
@@ -16,15 +16,15 @@ struct AddEntryView: View {
     @State private var showEditor = false
     @State private var sceneString: String?
     @State private var previewImageURL: URL?
-    @State private var entry: JournalEntry?
+    @State private var memory: Memory?
     
     let viewModel: JournalViewModel
-    let entryToEdit: JournalEntry?
-    private var isEditing: Bool { entryToEdit != nil }
+    let memoryToEdit: Memory?
+    private var isEditing: Bool { memoryToEdit != nil }
 
-    init(viewModel: JournalViewModel, entryToEdit: JournalEntry? = nil) {
+    init(viewModel: JournalViewModel, memoryToEdit: Memory? = nil) {
         self.viewModel = viewModel
-        self.entryToEdit = entryToEdit
+        self.memoryToEdit = memoryToEdit
     }
     
     private func loadPreviewImage(from url: URL) -> UIImage? {
@@ -43,7 +43,7 @@ struct AddEntryView: View {
                 Section(header: Text("Image")) {
                     ZStack(alignment: .topTrailing) {
                         if let sceneString, !sceneString.isEmpty && sceneString != "/dev/null",
-                           let entry = entry {
+                           let entry = memory {
                             PreviewImageView(
                                 entry: entry,
                                 viewModel: viewModel,
@@ -66,7 +66,7 @@ struct AddEntryView: View {
                         .frame(minHeight: 100)
                 }
             }
-            .navigationTitle(isEditing ? "Edit Entry" : "New Entry")
+            .navigationTitle(isEditing ? "Edit Memory" : "New Memory")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -77,9 +77,9 @@ struct AddEntryView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(isEditing ? "Update" : "Save") {
                         if isEditing {
-                            viewModel.saveEntry(entryToEdit, title: title, note: description, sceneString: sceneString, previewImageURL: previewImageURL)
+                            viewModel.saveMemory(memoryToEdit, title: title, note: description, sceneString: sceneString, previewImageURL: previewImageURL)
                         } else {
-                            viewModel.saveEntry(title: title, note: description, sceneString: sceneString, previewImageURL: previewImageURL)
+                            viewModel.saveMemory(title: title, note: description, sceneString: sceneString, previewImageURL: previewImageURL)
                         }
                         dismiss()
                     }
@@ -88,16 +88,16 @@ struct AddEntryView: View {
             }
         }
         .onAppear {
-            if let entryToEdit = entryToEdit {
-                // Editing existing entry
-                entry = entryToEdit
-                title = entryToEdit.title
-                description = entryToEdit.note
-                sceneString = entryToEdit.sceneString != "/dev/null" ? entryToEdit.sceneString : nil
-                previewImageURL = entryToEdit.previewImageURL
+            if let memoryToEdit = memoryToEdit {
+                // Editing existing memory
+                memory = memoryToEdit
+                title = memoryToEdit.title
+                description = memoryToEdit.note
+                sceneString = memoryToEdit.sceneString != "/dev/null" ? memoryToEdit.sceneString : nil
+                previewImageURL = memoryToEdit.previewImageURL
                 
-                // Generate preview for the existing entry
-                viewModel.generatePreviewImage(for: entryToEdit)
+                // Generate preview for the existing memory
+                viewModel.generatePreviewImage(for: memoryToEdit)
             }
         }
         .fullScreenCover(isPresented: $showEditor) {
@@ -107,25 +107,25 @@ struct AddEntryView: View {
                     self.previewImageURL = previewImageURL
                     
                     if isEditing {
-                        // Update existing entry
-                        entry?.sceneString = savedSceneString
+                        // Update existing memory
+                        memory?.sceneString = savedSceneString
                         if let previewImageURL {
-                            entry?.previewImageURL = previewImageURL
+                            memory?.previewImageURL = previewImageURL
                         }
-                        if let entry = entry {
-                            viewModel.refreshPreviewImage(for: entry)
+                        if let memory = memory {
+                            viewModel.refreshPreviewImage(for: memory)
                         }
                     } else {
                         // Create temporary entry for preview
-                        entry = JournalEntry(
+                        memory = Memory(
                             title: "Preview",
                             note: "",
                             sceneString: savedSceneString,
                             previewImageURL: previewImageURL
                         )
                         
-                        if let entry = entry {
-                            viewModel.generatePreviewImage(for: entry)
+                        if let memory = memory {
+                            viewModel.generatePreviewImage(for: memory)
                         }
                     }
                 },

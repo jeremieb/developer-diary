@@ -8,14 +8,14 @@
 import SwiftUI
 
 struct PreviewImageView: View {
-    let entry: JournalEntry
+    let memory: Memory
     let viewModel: JournalViewModel
     let height: CGFloat
     let showEditButton: Bool
     let onEditTap: (() -> Void)?
     
-    init(entry: JournalEntry, viewModel: JournalViewModel, height: CGFloat = 200, showEditButton: Bool = true, onEditTap: (() -> Void)? = nil) {
-        self.entry = entry
+    init(entry: Memory, viewModel: JournalViewModel, height: CGFloat = 200, showEditButton: Bool = true, onEditTap: (() -> Void)? = nil) {
+        self.memory = entry
         self.viewModel = viewModel
         self.height = height
         self.showEditButton = showEditButton
@@ -26,11 +26,11 @@ struct PreviewImageView: View {
     var body: some View {
         VStack {
             Group {
-                if viewModel.isGeneratingPreview(for: entry) {
+                if viewModel.isGeneratingPreview(for: memory) {
                     VStack(spacing: 12) {
                         ProgressView()
                     }
-                } else if let previewImage = viewModel.previewImage(for: entry) {
+                } else if let previewImage = viewModel.previewImage(for: memory) {
                     previewImage
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -45,14 +45,14 @@ struct PreviewImageView: View {
                                 .font(.caption)
                                 .foregroundColor(.blue)
                         }
-                        Text("Scene length: \(entry.sceneString.count)")
+                        Text("Scene length: \(memory.sceneString.count)")
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .center)
-            if showEditButton && viewModel.previewImage(for: entry) != nil {
+            if showEditButton && viewModel.previewImage(for: memory) != nil {
                 Button("Edit Image") {
                     onEditTap?()
                 }
@@ -60,6 +60,6 @@ struct PreviewImageView: View {
                 .font(.caption)
             }
         }
-        .animation(.easeInOut, value: viewModel.isGeneratingPreview(for: entry))
+        .animation(.easeInOut, value: viewModel.isGeneratingPreview(for: memory))
     }
 }

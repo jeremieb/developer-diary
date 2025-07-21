@@ -14,6 +14,6 @@ struct Developer_DiaryApp: App {
         WindowGroup {
             JournalListView()
         }
-        .modelContainer(for: JournalEntry.self)
+        .modelContainer(for: Memory.self)
     }
 }

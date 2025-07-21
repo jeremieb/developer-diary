@@ -1,5 +1,5 @@
 //
-//  JournalDetailView.swift
+//  MemoryView.swift
 //  Developer Diary
 //
 //  Created by Jeremie Berduck on 18/07/2025.
@@ -9,8 +9,8 @@ import SwiftUI
 import IMGLYDesignEditor
 import IMGLYEngine
 
-struct JournalDetailView: View {
-    let entry: JournalEntry
+struct MemoryView: View {
+    let memory: Memory
     let viewModel: JournalViewModel
     
     @State private var showEditView = false
@@ -19,20 +19,20 @@ struct JournalDetailView: View {
         VStack {
             Spacer()
             VStack(alignment: .leading, spacing: 16) {
-                if entry.title != "" {
+                if memory.title != "" {
                     // Title section
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(entry.title)
+                        Text(memory.title)
                             .font(.title2)
                             .fontWeight(.semibold).fontWidth(.expanded)
                     }
                 }
                 
                 // Note section
-                if entry.note != "" {
+                if memory.note != "" {
                     Divider()
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(entry.note)
+                        Text(memory.note)
                             .font(.body)
                             .lineLimit(nil)
                     }
@@ -46,9 +46,9 @@ struct JournalDetailView: View {
             .foregroundStyle(Color.primary)
         }
         .background {
-            if entry.hasSceneFile {
+            if memory.hasSceneFile {
                 PreviewImageView(
-                    entry: entry,
+                    entry: memory,
                     viewModel: viewModel,
                     height: UIScreen.main.bounds.height,
                     showEditButton: false
@@ -68,7 +68,7 @@ struct JournalDetailView: View {
             }
         }
         .fullScreenCover(isPresented: $showEditView) {
-            AddEntryView(viewModel: viewModel, entryToEdit: entry)
+            AddMemoryView(viewModel: viewModel, memoryToEdit: memory)
         }
     }
 }

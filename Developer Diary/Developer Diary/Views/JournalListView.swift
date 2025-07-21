@@ -15,30 +15,30 @@ struct JournalListView: View {
     
     @State private var showAddView = false
     @State private var viewModel: JournalViewModel?
-    @State private var selectedJournalEntry: JournalEntry?
-    @State private var editEntry: JournalEntry?
+    @State private var selectedMemory: Memory?
+    @State private var editMemory: Memory?
     
     var body: some View {
         NavigationStack {
             if let viewModel {
                 ScrollView {
                     StaggeredGridLayout(columns: 2, spacing: 16, verticalOffset: 66) {
-                        ForEach(viewModel.entries, id: \.id) { entry in
+                        ForEach(viewModel.memories, id: \.id) { memory in
                             Button(action: {
-                                self.selectedJournalEntry = entry
+                                self.selectedMemory = memory
                             }){
-                                JournalEntryCardView(entry: entry, viewModel: viewModel)
-                                    .matchedTransitionSource(id: entry.id, in: namespace)
+                                JournalEntryCardView(memory: memory, viewModel: viewModel)
+                                    .matchedTransitionSource(id: memory.id, in: namespace)
                             }
                             .contextMenu {
                                 Button(action: {
-                                    editEntry = entry
+                                    editMemory = memory
                                 }){
                                     Label("Edit", systemImage: "square.and.pencil")
                                 }
                                 Divider()
                                 Button(role: .destructive, action: {
-                                    viewModel.deleteEntry(entry)
+                                    viewModel.deleteEntry(memory)
                                 }){
                                     Label("Delete", systemImage: "trash")
                                 }
@@ -46,11 +46,11 @@ struct JournalListView: View {
                         }
                     }
                     .padding(.horizontal).padding(.top)
-                    .navigationDestination(item: $selectedJournalEntry) { entry in
-                        JournalDetailView(entry: entry, viewModel: viewModel)
-                            .navigationTransition(.zoom(sourceID: entry.id, in: namespace))
+                    .navigationDestination(item: $selectedMemory) { memory in
+                        MemoryView(memory: memory, viewModel: viewModel)
+                            .navigationTransition(.zoom(sourceID: memory.id, in: namespace))
                     }
-                    .animation(.easeInOut, value: viewModel.entries)
+                    .animation(.easeInOut, value: viewModel.memories)
                 }
                 .navigationTitle("My Journal")
                 .toolbar {
@@ -60,22 +60,22 @@ struct JournalListView: View {
                         Label("Add Entry", systemImage: "plus")
                     }
                 }
-                .onChange(of: editEntry) { _, newState in
+                .onChange(of: editMemory) { _, newState in
                     if newState != nil {
                         showAddView.toggle()
                     }
                 }
                 .fullScreenCover(isPresented: $showAddView, onDismiss: {
-                    editEntry = nil
+                    editMemory = nil
                 }) {
-                    AddEntryView(viewModel: viewModel, entryToEdit: editEntry)
+                    AddMemoryView(viewModel: viewModel, memoryToEdit: editMemory)
                 }
                 .overlay {
-                    if viewModel.entries.count == 0 {
+                    if viewModel.memories.count == 0 {
                         ContentUnavailableView {
                             Label("Your Journal is empty", systemImage: "append.page.fill")
                         } description: {
-                            Text("Use the add button on the top of the screen to add your first entry.")
+                            Text("Use the add button on the top of the screen to add your first memory.")
                         }
                     }
                 }

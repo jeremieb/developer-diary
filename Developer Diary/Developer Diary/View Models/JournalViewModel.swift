@@ -14,54 +14,54 @@ import IMGLYEngine
 final class JournalViewModel {
     private let context: ModelContext
     
-    var entries: [JournalEntry] = []
+    var memories: [Memory] = []
     private var previewImageCache: [UUID: UIImage] = [:]
     private var generatingPreviews: Set<UUID> = []
     
     init(context: ModelContext) {
         self.context = context
-        fetchEntries()
+        fetchMemories()
     }
     
-    func fetchEntries() {
+    func fetchMemories() {
         do {
-            let descriptor = FetchDescriptor<JournalEntry>(sortBy: [.init(\.date, order: .reverse)])
-            entries = try context.fetch(descriptor)
+            let descriptor = FetchDescriptor<Memory>(sortBy: [.init(\.date, order: .reverse)])
+            memories = try context.fetch(descriptor)
         } catch {
             print("Error fetching entries: \(error.localizedDescription)")
         }
     }
     
-    func saveEntry(_ entry: JournalEntry? = nil, title: String, note: String, sceneString: String?, previewImageURL: URL? = nil) {
-        if let entry = entry {
-            // Update existing entry
-            entry.title = title
-            entry.note = note
+    func saveMemory(_ memory: Memory? = nil, title: String, note: String, sceneString: String?, previewImageURL: URL? = nil) {
+        if let memory = memory {
+            // Update existing memory
+            memory.title = title
+            memory.note = note
             if let sceneString {
-                entry.sceneString = sceneString
+                memory.sceneString = sceneString
                 // Clear cached preview when scene changes
-                previewImageCache.removeValue(forKey: entry.id)
+                previewImageCache.removeValue(forKey: memory.id)
                 // Also remove from generating set to allow regeneration
-                generatingPreviews.remove(entry.id)
+                generatingPreviews.remove(memory.id)
             }
             if let previewImageURL {
-                entry.previewImageURL = previewImageURL
+                memory.previewImageURL = previewImageURL
             }
         } else {
-            // Create new entry
+            // Create new memory
             let scene = sceneString ?? "/dev/null"
-            let newEntry = JournalEntry(title: title, note: note, sceneString: scene, previewImageURL: previewImageURL)
-            context.insert(newEntry)
+            let newMemory = Memory(title: title, note: note, sceneString: scene, previewImageURL: previewImageURL)
+            context.insert(newMemory)
         }
         
         do {
             try context.save()
-            fetchEntries()
+            fetchMemories()
             
             // Force regenerate preview if scene was updated
-            if let entry = entry, sceneString != nil {
+            if let memory = memory, sceneString != nil {
                 Task { @MainActor in
-                    generatePreviewImage(for: entry)
+                    generatePreviewImage(for: memory)
                 }
             }
         } catch {
@@ -69,48 +69,47 @@ final class JournalViewModel {
         }
     }
     
-    func deleteEntry(_ entry: JournalEntry) {
+    func deleteEntry(_ memory: Memory) {
         // Clean up preview image file if it exists
-        if entry.hasPreviewImage, let previewURL = entry.previewImageURL {
+        if memory.hasPreviewImage, let previewURL = memory.previewImageURL {
             try? FileManager.default.removeItem(at: previewURL)
         }
         
         // Remove from cache
-        previewImageCache.removeValue(forKey: entry.id)
-        generatingPreviews.remove(entry.id)
+        previewImageCache.removeValue(forKey: memory.id)
+        generatingPreviews.remove(memory.id)
         
-        context.delete(entry)
+        context.delete(memory)
         
         do {
             try context.save()
-            fetchEntries()
+            fetchMemories()
         } catch {
             print("Error deleting entry: \(error.localizedDescription)")
         }
     }
     
     // MARK: - Preview Image Generation
-    
-    func getPreviewImage(for entry: JournalEntry) -> UIImage? {
-        return previewImageCache[entry.id]
+    func getPreviewImage(for memory: Memory) -> UIImage? {
+        return previewImageCache[memory.id]
     }
     
-    func isGeneratingPreview(for entry: JournalEntry) -> Bool {
-        return generatingPreviews.contains(entry.id)
+    func isGeneratingPreview(for memory: Memory) -> Bool {
+        return generatingPreviews.contains(memory.id)
     }
     
     @MainActor
-    func generatePreviewImage(for entry: JournalEntry) {
+    func generatePreviewImage(for memory: Memory) {
         // Don't generate if already generating or if no scene
-        guard !generatingPreviews.contains(entry.id) && entry.hasSceneFile else { return }
+        guard !generatingPreviews.contains(memory.id) && memory.hasSceneFile else { return }
         
         // Check if we already have a cached image
-        if previewImageCache[entry.id] != nil { return }
+        if previewImageCache[memory.id] != nil { return }
         
-        generatingPreviews.insert(entry.id)
+        generatingPreviews.insert(memory.id)
         
         Task {
-            defer { generatingPreviews.remove(entry.id) }
+            defer { generatingPreviews.remove(memory.id) }
             
             do {
                 let engine = try await Engine(
@@ -118,7 +117,7 @@ final class JournalViewModel {
                     userID: "myUniqueUserID01"
                 )
                 
-                try await engine.scene.load(from: entry.sceneString)
+                try await engine.scene.load(from: memory.sceneString)
                 guard let scene = try engine.scene.get() else { return }
                 
                 let exportOptions = ExportOptions(
@@ -130,8 +129,8 @@ final class JournalViewModel {
                 let imageData = try await engine.block.export(scene, mimeType: .jpeg, options: exportOptions)
                 
                 if let image = UIImage(data: imageData) {
-                    previewImageCache[entry.id] = image
-                    await savePreviewImage(imageData, for: entry.id)
+                    previewImageCache[memory.id] = image
+                    await savePreviewImage(imageData, for: memory.id)
                 }
                 
             } catch {
@@ -140,7 +139,7 @@ final class JournalViewModel {
         }
     }
     
-    private func savePreviewImage(_ imageData: Data, for entryID: UUID) async {
+    private func savePreviewImage(_ imageData: Data, for memoryID: UUID) async {
         do {
             // Always use the current app container's documents directory
             let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -150,15 +149,15 @@ final class JournalViewModel {
             try FileManager.default.createDirectory(at: previewsDirectory, withIntermediateDirectories: true)
             
             // Create a consistent filename based on entry ID
-            let imageURL = previewsDirectory.appendingPathComponent("preview_\(entryID.uuidString).jpeg")
+            let imageURL = previewsDirectory.appendingPathComponent("preview_\(memoryID.uuidString).jpeg")
             
             // Save the image
             try imageData.write(to: imageURL)
             
-            // Update the entry with the new URL
+            // Update the memory with the new URL
             await MainActor.run {
                 // Find the entry by ID and update it
-                if let entry = entries.first(where: { $0.id == entryID }) {
+                if let entry = memories.first(where: { $0.id == memoryID }) {
                     entry.previewImageURL = imageURL
                     try? context.save()
                 }
@@ -169,24 +168,21 @@ final class JournalViewModel {
     }
 
     @MainActor
-    func refreshPreviewImage(for entry: JournalEntry) {
+    func refreshPreviewImage(for memory: Memory) {
         // Clear cache and force regeneration
-        previewImageCache.removeValue(forKey: entry.id)
-        generatingPreviews.remove(entry.id)
-        generatePreviewImage(for: entry)
+        previewImageCache.removeValue(forKey: memory.id)
+        generatingPreviews.remove(memory.id)
+        generatePreviewImage(for: memory)
     }
     
-    func previewImage(for entry: JournalEntry) -> Image? {
-        if let uiImage = previewImageCache[entry.id] {
+    func previewImage(for memory: Memory) -> Image? {
+        if let uiImage = previewImageCache[memory.id] {
             return Image(uiImage: uiImage)
         }
         return nil
     }
     
-    func hasPreviewImage(for entry: JournalEntry) -> Bool {
-        return previewImageCache[entry.id] != nil
-    }
-    
-    deinit {
+    func hasPreviewImage(for memory: Memory) -> Bool {
+        return previewImageCache[memory.id] != nil
     }
 }
