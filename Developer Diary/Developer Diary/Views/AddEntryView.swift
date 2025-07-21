@@ -16,9 +16,11 @@ struct AddEntryView: View {
     @State private var showEditor = false
     @State private var sceneString: String?
     @State private var previewImageURL: URL?
+    @State private var entry: JournalEntry?
     
     let viewModel: JournalViewModel
     let entryToEdit: JournalEntry?
+    private var isEditing: Bool { entryToEdit != nil }
 
     init(viewModel: JournalViewModel, entryToEdit: JournalEntry? = nil) {
         self.viewModel = viewModel
@@ -38,6 +40,23 @@ struct AddEntryView: View {
     var body: some View {
         NavigationView {
             Form {
+                Section(header: Text("Image")) {
+                    ZStack(alignment: .topTrailing) {
+                        if let sceneString, !sceneString.isEmpty && sceneString != "/dev/null",
+                           let entry = entry {
+                            PreviewImageView(
+                                entry: entry,
+                                viewModel: viewModel,
+                                showEditButton: false
+                            )
+                        }
+                        
+                        Button(isEditing ? "Edit Image" : "Add Image") {
+                            showEditor = true
+                        }.buttonStyle(.borderedProminent).padding()
+                    }
+                }.listRowInsets(.init())
+                
                 Section(header: Text("Title")) {
                     TextField("Enter title", text: $title)
                 }
@@ -46,26 +65,8 @@ struct AddEntryView: View {
                     TextEditor(text: $description)
                         .frame(minHeight: 100)
                 }
-                
-                Section(header: Text("Image")) {
-                    ZStack(alignment: .topTrailing) {
-                        if let sceneString, !sceneString.isEmpty && sceneString != "/dev/null" {
-                            if let entry = entryToEdit {
-                                // For editing, use the actual entry to maintain cache
-                                PreviewImageView(
-                                    entry: entry,
-                                    viewModel: viewModel,
-                                    showEditButton: false
-                                )
-                            }
-                        }
-                        Button(entryToEdit != nil ? "Edit Image" : "Add Image") {
-                            showEditor = true
-                        }.buttonStyle(.borderedProminent).padding()
-                    }
-                }.listRowInsets(.init())
             }
-            .navigationTitle(entryToEdit != nil ? "Edit Entry" : "New Entry")
+            .navigationTitle(isEditing ? "Edit Entry" : "New Entry")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -74,9 +75,9 @@ struct AddEntryView: View {
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(entryToEdit != nil ? "Update" : "Save") {
-                        if let entry = entryToEdit {
-                            viewModel.saveEntry(entry, title: title, note: description, sceneString: sceneString, previewImageURL: previewImageURL)
+                    Button(isEditing ? "Update" : "Save") {
+                        if isEditing {
+                            viewModel.saveEntry(entryToEdit, title: title, note: description, sceneString: sceneString, previewImageURL: previewImageURL)
                         } else {
                             viewModel.saveEntry(title: title, note: description, sceneString: sceneString, previewImageURL: previewImageURL)
                         }
@@ -87,14 +88,16 @@ struct AddEntryView: View {
             }
         }
         .onAppear {
-            if let entry = entryToEdit {
-                title = entry.title
-                description = entry.note
-                sceneString = entry.sceneString != "/dev/null" ? entry.sceneString : nil
-                previewImageURL = entry.previewImageURL
+            if let entryToEdit = entryToEdit {
+                // Editing existing entry
+                entry = entryToEdit
+                title = entryToEdit.title
+                description = entryToEdit.note
+                sceneString = entryToEdit.sceneString != "/dev/null" ? entryToEdit.sceneString : nil
+                previewImageURL = entryToEdit.previewImageURL
                 
                 // Generate preview for the existing entry
-                viewModel.generatePreviewImage(for: entry)
+                viewModel.generatePreviewImage(for: entryToEdit)
             }
         }
         .fullScreenCover(isPresented: $showEditor) {
@@ -103,14 +106,27 @@ struct AddEntryView: View {
                     sceneString = savedSceneString
                     self.previewImageURL = previewImageURL
                     
-                    // If we're editing an existing entry, update the actual entry's scene string immediately
-                    if let entry = entryToEdit {
-                        entry.sceneString = savedSceneString
+                    if isEditing {
+                        // Update existing entry
+                        entry?.sceneString = savedSceneString
                         if let previewImageURL {
-                            entry.previewImageURL = previewImageURL
+                            entry?.previewImageURL = previewImageURL
                         }
-                        // Now refresh the preview with the updated scene string
-                        viewModel.refreshPreviewImage(for: entry)
+                        if let entry = entry {
+                            viewModel.refreshPreviewImage(for: entry)
+                        }
+                    } else {
+                        // Create temporary entry for preview
+                        entry = JournalEntry(
+                            title: "Preview",
+                            note: "",
+                            sceneString: savedSceneString,
+                            previewImageURL: previewImageURL
+                        )
+                        
+                        if let entry = entry {
+                            viewModel.generatePreviewImage(for: entry)
+                        }
                     }
                 },
                 existingSceneString: sceneString

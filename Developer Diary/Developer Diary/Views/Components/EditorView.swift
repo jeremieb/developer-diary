@@ -50,9 +50,7 @@ struct EditorView: View {
                         await saveScene()
                     }
                 }
-        }
-        .navigationViewStyle(.stack)
-        .interactiveDismissDisabled()
+        }.navigationViewStyle(.stack)
     }
     
     @MainActor
