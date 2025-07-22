@@ -1,3 +1,9 @@
+# IMG.LY Document
+
+## Video Presentation
+
+[IMG.ly.m4v](https://resv2.craft.do/user/full/47de7f02-40eb-a7ec-cf46-a47256d762c1/doc/E32BE1F2-96BB-40A4-BB3D-544E2DCD48AF/FDD37E60-E4BF-4D96-96F5-85B9B4B2C164_2/JxH0VS7KMTguVsLInNeN29CHaEi8EN606nNI5UjdpEAz/IMG.ly.m4v)
+
 ## PART 1
 
 ### Your project
@@ -74,7 +80,18 @@ To validate the feasibility and developer experience, we built a lightweight pro
 
 As a note, the current POC uses **Swift Data** to store memories and associated scene files locally, which may lead to slower app launch times as the database grows. In a production environment, we recommend storing final images and editing states on a **CDN or cloud-based storage**, ensuring faster access, better scalability, and a smoother user experience across devices.
 
-> Github sources: 
+
+![01.png](https://resv2.craft.do/user/full/47de7f02-40eb-a7ec-cf46-a47256d762c1/doc/E32BE1F2-96BB-40A4-BB3D-544E2DCD48AF/365AF2AA-D3E3-460F-89A4-1F3C2EB889A1_2/lWDcGNdHU9CQLozyPmdxNL79INzOt3FYk8JbX22TaRoz/01.png)
+
+![02.png](https://resv2.craft.do/user/full/47de7f02-40eb-a7ec-cf46-a47256d762c1/doc/E32BE1F2-96BB-40A4-BB3D-544E2DCD48AF/1E93EF54-737D-49BA-90FA-99E4FD276FF4_2/bJxg1AXinrvVLUTcEuu17YuOesWJ2OIpeV3P4t1E82Iz/02.png)
+
+![03.png](https://resv2.craft.do/user/full/47de7f02-40eb-a7ec-cf46-a47256d762c1/doc/E32BE1F2-96BB-40A4-BB3D-544E2DCD48AF/64B4CFEE-AB2F-4D8E-8C2B-C8861C521E6F_2/bcpMCZvLrJYfgsJATxGqNw9qrVFdemRAjmW5HF81qvAz/03.png)
+
+![04.png](https://resv2.craft.do/user/full/47de7f02-40eb-a7ec-cf46-a47256d762c1/doc/E32BE1F2-96BB-40A4-BB3D-544E2DCD48AF/5211AE59-F927-4537-ADE5-F2D1B74CB60F_2/AR60AsPE8KqPxQAwIuVKz461L3cX4h51py3fnxSPT9gz/04.png)
+
+![05.png](https://resv2.craft.do/user/full/47de7f02-40eb-a7ec-cf46-a47256d762c1/doc/E32BE1F2-96BB-40A4-BB3D-544E2DCD48AF/D6CDAC3B-D1B5-469E-AE09-ACD981458FF6_2/b79VJzd8jfdpCtQ5LGIy72ILa3wTGReGlptuC2mPeUcz/05.png)
+
+> ➡️ [Github sources](https://github.com/jeremieb/developer-diary/)
 
 ---
 
@@ -84,7 +101,7 @@ As a note, the current POC uses **Swift Data** to store memories and associated 
 
 To further elevate the journaling experience and maximize the value of CE.SDK, we believe there are opportunities to reduce friction and deepen emotional engagement through well-integrated system features and smart re-entry points.
 
-## App Intents
+### App Intents
 
 One idea is to leverage **Siri Shortcuts and App Intents**, enabling users to instantly “Add a New Memory” via voice or tap—even without opening the app. This lowers the barrier to entry and encourages spontaneous journaling. Even more powerful, Siri can learn user behavior over time—such as when they typically create new entries—and proactively suggest the shortcut at relevant moments (e.g. after a walk, during a commute, or in the evening). By surfacing the journaling action when it matters most, we not only make the editor more accessible, but also build meaningful habits around memory capture—boosting both engagement and emotional relevance.
 
@@ -106,7 +123,5 @@ Additionally, we suggest incorporating a lightweight **mood tracker** during the
 ![Image.tiff](https://resv2.craft.do/user/full/47de7f02-40eb-a7ec-cf46-a47256d762c1/doc/E32BE1F2-96BB-40A4-BB3D-544E2DCD48AF/5106403F-05AB-400F-A512-C3B272A1A1B8_2/9XJmT24dndpOfERO2xQaRx3q8iNCdWg65oWpq4iCnxQz/Image.tiff)
 
 By integrating these features, we’re not just delivering an editing tool—we’re creating a product that fits seamlessly into users’ lives, helps them build meaningful habits, and brings lasting emotional value. It’s a thoughtful use of CE.SDK’s flexibility that not only improves the user experience but also supports the success and stickiness of the product itself.
-
----
 
 Thank you.
