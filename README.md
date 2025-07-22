@@ -2,7 +2,9 @@
 
 ## Video Presentation
 
-[IMG.ly.m4v](https://resv2.craft.do/user/full/47de7f02-40eb-a7ec-cf46-a47256d762c1/doc/E32BE1F2-96BB-40A4-BB3D-544E2DCD48AF/FDD37E60-E4BF-4D96-96F5-85B9B4B2C164_2/JxH0VS7KMTguVsLInNeN29CHaEi8EN606nNI5UjdpEAz/IMG.ly.m4v)
+ In this short video, I walk through the document and share my thought process behind the key decisions, tradeoffs, and product ideas included in the assignment.
+
+> ➡️ [Launch the video](https://resv2.craft.do/user/full/47de7f02-40eb-a7ec-cf46-a47256d762c1/doc/E32BE1F2-96BB-40A4-BB3D-544E2DCD48AF/FDD37E60-E4BF-4D96-96F5-85B9B4B2C164_2/JxH0VS7KMTguVsLInNeN29CHaEi8EN606nNI5UjdpEAz/IMG.ly.m4v)
 
 ## PART 1
 
